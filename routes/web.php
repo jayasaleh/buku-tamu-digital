@@ -29,10 +29,7 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('guestbook')->name('guestbook.')->group(function () {
         Route::get('/', [GuestBookController::class, 'index'])->name('index');
-
         Route::post('/', [GuestBookController::class, 'store'])->name('store');
-
-        Route::get('/{id}/edit', [GuestBookController::class, 'edit'])->name('edit');
         Route::put('/{id}', [GuestBookController::class, 'update'])->name('update');
         Route::delete('/{id}', [GuestBookController::class, 'destroy'])->name('destroy');
 

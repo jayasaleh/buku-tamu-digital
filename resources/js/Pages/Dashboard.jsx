@@ -42,6 +42,7 @@ export default function Dashboard({ allGuestBooks, users }) {
                                     guestBooks={allGuestBooks}
                                     showActions={true}
                                     refreshData={refreshData} // <-- Tambahkan ini
+                                    users={users}
                                 />
                             </div>
                         </div>
