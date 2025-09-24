@@ -21,6 +21,10 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'position',
+        'contact',
+        'division_id',
+        'role',
     ];
 
     /**
@@ -44,5 +48,17 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+    public function division()
+    {
+        return $this->belongsTo(Division::class);
+    }
+
+    /**
+     * Get the guest book entries for the user.
+     */
+    public function guestBooks()
+    {
+        return $this->hasMany(GuestBook::class);
     }
 }
