@@ -36,20 +36,25 @@ class GuestBookController extends Controller
     {
         $validatedData = $request->validate([
             'guest_name' => 'required|string|max:255',
-            'check_out_time' => 'nullable|date_format:H:i|after_or_equal:check_in_time',
             'company' => 'required|string|max:255',
             'purpose' => 'required|string|max:255',
             'user_id' => 'required|exists:users,id',
         ]);
         $receptionist = auth()->user(); // Pastikan user login
 
-        $validatedData['visit_date'] = now()->format('Y-m-d'); // Tanggal saat ini
-        $validatedData['check_in_time'] = now()->format('H:i'); // Jam saat ini
-
+        $validatedData['visit_date'] = now()->format('Y-m-d');
+        $validatedData['check_in_time'] = now()->format('H:i');
         $validatedData['identity_number'] = $this->generateUniqueIdentityNumber();
         $validatedData['receptionist_name'] = $receptionist->name;
         GuestBook::create($validatedData);
         return redirect()->route('guestbook.index')->with('success', 'Guest book entry created successfully!');
+    }
+    public function updateCheckOut(Request $request, $id)
+    {
+        $guestBook = GuestBook::findOrFail($id);
+        $guestBook->check_out_time = now()->format('H:i');
+        $guestBook->save();
+        return response()->json(['message' => 'Check-out time updated successfully'], 200);
     }
     private function generateUniqueIdentityNumber()
     {

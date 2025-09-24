@@ -1,9 +1,11 @@
+// resources/js/Components/GuestBook/GuestBookTable.jsx
+
 import React from "react";
 import { Link } from "@inertiajs/react";
 import { format } from "date-fns";
 import { Button } from "@/Components/ui/button";
 
-const GuestBookTable = ({ guestBooks, showActions = true }) => {
+const GuestBookTable = ({ guestBooks, showActions = true, refreshData }) => {
     const formatTime = (timeStr) => {
         if (!timeStr) return "-";
         return timeStr;
@@ -12,6 +14,44 @@ const GuestBookTable = ({ guestBooks, showActions = true }) => {
     const formatDate = (dateStr) => {
         if (!dateStr) return "-";
         return format(new Date(dateStr), "dd/MM/yyyy");
+    };
+
+    const handleUpdateCheckOut = (entryId) => {
+        if (
+            confirm(
+                "Apakah kamu yakin akan melakukan check-out untuk tamu ini?"
+            )
+        ) {
+            fetch(route("guestbook.update.checkout", entryId), {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-Requested-With": "XMLHttpRequest",
+                    "X-CSRF-TOKEN": document
+                        .querySelector('meta[name="csrf-token"]')
+                        .getAttribute("content"),
+                },
+            })
+                .then((response) => {
+                    if (response.ok) {
+                        if (refreshData) {
+                            refreshData();
+                        }
+                    } else {
+                        console.error(
+                            "Failed to update check-out time:",
+                            response.statusText
+                        );
+                        alert(
+                            "Error updating check-out time. Please try again."
+                        );
+                    }
+                })
+                .catch((error) => {
+                    console.error("Network error:", error);
+                    alert("Network error. Please try again.");
+                });
+        }
     };
 
     if (!guestBooks || guestBooks.length === 0) {
@@ -70,6 +110,7 @@ const GuestBookTable = ({ guestBooks, showActions = true }) => {
                 <tbody className="bg-white divide-y divide-gray-200">
                     {guestBooks.map((entry, index) => (
                         <tr key={entry.id}>
+                            {/* ... (kolom data lainnya) ... */}
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {index + 1}
                             </td>
@@ -83,7 +124,19 @@ const GuestBookTable = ({ guestBooks, showActions = true }) => {
                                 {formatTime(entry.check_in_time)}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {formatTime(entry.check_out_time)}
+                                {entry.check_out_time === null ? (
+                                    <Button
+                                        size="sm"
+                                        className="bg-red-500 hover:bg-red-700 text-white"
+                                        onClick={() =>
+                                            handleUpdateCheckOut(entry.id)
+                                        }
+                                    >
+                                        Check-out
+                                    </Button>
+                                ) : (
+                                    formatTime(entry.check_out_time)
+                                )}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                 {entry.company}
@@ -109,10 +162,20 @@ const GuestBookTable = ({ guestBooks, showActions = true }) => {
                                         href={route("guestbook.edit", entry.id)}
                                         className="mr-2"
                                     >
-                                        <Button variant="outline" size="sm">
+                                        <Button
+                                            size="sm"
+                                            className="bg-blue-500 text-white hover:bg-blue-700"
+                                        >
                                             Edit
                                         </Button>
                                     </Link>
+
+                                    <Button
+                                        size="sm"
+                                        className="bg-red-500 hover:bg-red-700 text-white"
+                                    >
+                                        Delete
+                                    </Button>
                                 </td>
                             )}
                         </tr>
