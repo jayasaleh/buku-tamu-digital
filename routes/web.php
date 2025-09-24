@@ -1,27 +1,37 @@
 <?php
 
+use App\Http\Controllers\GuestBookController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
-});
+    return redirect()->route('dashboard');
+})->middleware(['auth']);
 
 Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+
+    $allGuestBooks = \App\Models\GuestBook::with(['user.division'])
+        ->orderBy('visit_date', 'desc')
+        ->orderBy('check_in_time', 'desc')
+        ->get();
+    $users = \App\Models\User::with('division')->get();
+
+    return Inertia::render('Dashboard', ['allGuestBooks' => $allGuestBooks, 'users' => $users]);
+})->middleware(['auth'])->name('dashboard');
+
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::prefix('guestbook')->name('guestbook.')->group(function () {
+        Route::get('/', [GuestBookController::class, 'index'])->name('index');
+        Route::get('/create', [GuestBookController::class, 'create'])->name('create');
+        Route::post('/', [GuestBookController::class, 'store'])->name('store');
+    });
 });
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';
