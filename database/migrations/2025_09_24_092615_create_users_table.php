@@ -17,6 +17,10 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->string('position');
+            $table->string('contact')->nullable();
+            $table->foreignId('division_id')->constrained('divisions');
+            $table->string('role')->default('employee');
             $table->rememberToken();
             $table->timestamps();
         });
