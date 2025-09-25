@@ -5,28 +5,45 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\GuestBook;
 use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class GuestBookController extends Controller
 {
-    // public function index()
-    // {
-    //     $guestBooks = GuestBook::with(['user.division'])
-    //         ->orderBy('visit_date', 'desc')
-    //         ->orderBy('check_in_time', 'desc')
-    //         ->get();
+    public function index(Request $request)
+    {
+        $searchGuestName = $request->query('search_guest_name');
+        $searchDate = $request->query('search_date');
+        $searchCompany = $request->query('search_company');
 
-    //     return Inertia::render('GuestBook/Index', [
-    //         'guestBooks' => $guestBooks,
-    //     ]);
-    // }
+        $query = GuestBook::with(['user.division'])
+            ->orderBy('visit_date', 'asc')
+            ->orderBy('check_in_time', 'asc');
 
-    // public function create()
-    // {
-    //     $users = User::with('division')->get();
-    //     return Inertia::render('GuestBook/Create', [
-    //         'users' => $users,
-    //     ]);
-    // }
+        if ($searchGuestName) {
+            $query->where('guest_name', 'LIKE', "%{$searchGuestName}%");
+        }
+
+        if ($searchDate) {
+            $query->whereDate('visit_date', $searchDate);
+        }
+
+        if ($searchCompany) {
+            $query->where('company', 'LIKE', "%{$searchCompany}%");
+        }
+
+        $allGuestBooks = $query->get();
+        $users = User::with('division')->get();
+
+        return inertia('Dashboard', [
+            'allGuestBooks' => $allGuestBooks,
+            'users' => $users,
+            'filters' => [
+                'search_guest_name' => $searchGuestName,
+                'search_date' => $searchDate,
+                'search_company' => $searchCompany,
+            ]
+        ]);
+    }
 
     public function store(Request $request)
     {
@@ -50,15 +67,7 @@ class GuestBookController extends Controller
         return redirect()->route('dashboard')->with('success', 'Guest book entry created successfully!');
     }
 
-    // public function show(GuestBook $guestBook)
-    // {
-    //     //
-    // }
 
-    // public function edit(GuestBook $guestBook)
-    // {
-    //     //
-    // }
 
     public function update(Request $request, $id)
     {
@@ -107,13 +116,58 @@ class GuestBookController extends Controller
 
     public function updateCheckOut(Request $request, $id)
     {
+
         $guestBook = GuestBook::findOrFail($id);
+
         $guestBook->check_out_time = now()->format('H:i');
+
         $guestBook->save();
+
+        if ($request->wantsJson() || $request->inertia()) {
+
+            return response('', 200);
+        }
 
         return back()->with('success', 'Check-out time updated successfully');
     }
+    public function exportPdf()
+    {
 
+        $searchGuestName = request('search_guest_name');
+        $searchDate = request('search_date');
+        $searchCompany = request('search_company');
+
+        $query = \App\Models\GuestBook::with(['user.division'])
+            ->orderBy('visit_date', 'asc')
+            ->orderBy('check_in_time', 'asc');
+
+        if ($searchGuestName) {
+            $query->where('guest_name', 'LIKE', "%{$searchGuestName}%");
+        }
+
+
+        if ($searchDate) {
+            $query->whereDate('visit_date', $searchDate);
+        }
+
+        if ($searchCompany) {
+            $query->where('company', 'LIKE', "%{$searchCompany}%");
+        }
+
+        $guestBooks = $query->get();
+
+        $filters = [
+            'search_guest_name' => $searchGuestName,
+            'search_date' => $searchDate,
+            'search_company' => $searchCompany,
+
+        ];
+
+
+        $pdf = Pdf::loadView('guestbooks.export_pdf', compact('guestBooks', 'filters'));
+
+        return $pdf->download('Buku_Tamu_PDF_' . now()->format('Y-m-d_H-i') . '.pdf');
+    }
     private function generateUniqueIdentityNumber()
     {
         do {

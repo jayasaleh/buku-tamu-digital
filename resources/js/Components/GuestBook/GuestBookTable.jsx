@@ -1,9 +1,9 @@
 // resources/js/Components/GuestBook/GuestBookTable.jsx
 
-import React, { useState } from "react"; // Import useState
-import { Link, usePage } from "@inertiajs/react"; // Import usePage untuk CSRF token
-import { format } from "date-fns";
 import { Button } from "@/Components/ui/button";
+import { router } from "@inertiajs/react"; // Import usePage untuk CSRF token
+import { format } from "date-fns";
+import { useState } from "react"; // Import useState
 // Impor komponen dialog edit
 import GuestBookEditDialog from "@/Components/GuestBook/GuestBookEditDialog";
 import GuestBookDeleteDialog from "./GuestBookDeleteDialog";
@@ -14,8 +14,6 @@ const GuestBookTable = ({
     refreshData,
     users = [],
 }) => {
-    const { csrf_token } = usePage().props;
-
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [currentEntry, setCurrentEntry] = useState(null);
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -36,39 +34,38 @@ const GuestBookTable = ({
                 "Apakah kamu yakin akan melakukan check-out untuk tamu ini?"
             )
         ) {
-            // Gunakan token CSRF dari Inertia props
-            fetch(route("guestbook.update.checkout", entryId), {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-Requested-With": "XMLHttpRequest",
-                    "X-CSRF-TOKEN": csrf_token, // Gunakan token dari Inertia props
-                },
-            })
-                .then((response) => {
-                    if (response.ok) {
+            // Gunakan router.put dari Inertia
+            router.put(
+                route("guestbook.update.checkout", entryId),
+                {},
+                {
+                    // Opsi konfigurasi
+                    preserveScroll: true, // Pertahankan posisi scroll
+                    preserveState: true, // Pertahankan state komponen lain (opsional, bisa dihapus jika tidak diperlukan)
+                    onSuccess: () => {
+                        // --- PERUBAHAN UTAMA ---
+                        // Panggil refreshData() hanya setelah permintaan berhasil
+                        // dan Inertia selesai memproses respons
+                        console.log(
+                            "Check-out updated successfully, refreshing data..."
+                        );
                         if (refreshData) {
-                            refreshData();
+                            refreshData(); // Ini akan memicu router.reload di Dashboard.jsx
                         }
-                    } else {
+                        // --- AKHIR PERUBAHAN UTAMA ---
+                    },
+                    onError: (errors) => {
+                        // Tangani error validasi atau error lain dari backend
                         console.error(
-                            "Failed to update check-out time:",
-                            response.statusText
+                            "Error updating check-out time (from Inertia):",
+                            errors
                         );
-                        response.text().then((text) => {
-                            console.error("Error response body:", text);
-                        });
                         alert(
-                            "Error updating check-out time. Please check the console for details."
-                        );
-                    }
-                })
-                .catch((error) => {
-                    console.error("Network error or fetch failed:", error);
-                    alert(
-                        "Network error or request failed. Please check the console for details."
-                    );
-                });
+                            "Error updating check-out time. Please try again."
+                        ); // Tampilkan alert untuk user
+                    },
+                }
+            );
         }
     };
 

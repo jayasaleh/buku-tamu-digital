@@ -12,20 +12,38 @@ Route::get('/', function () {
 })->middleware(['auth']);
 
 Route::get('/dashboard', function () {
+    $searchGuestName = request('search_guest_name');
+    $searchDate = request('search_date');
+    $searchCompany = request('search_company');
 
-    $allGuestBooks = \App\Models\GuestBook::with(['user.division'])
+    $query = \App\Models\GuestBook::with(['user.division'])
         ->orderBy('visit_date', 'desc')
-        ->orderBy('check_in_time', 'desc')
-        ->get();
+        ->orderBy('check_in_time', 'desc');
 
+    if ($searchGuestName) {
+        $query->where('guest_name', 'LIKE', "%{$searchGuestName}%");
+    }
+
+    if ($searchDate) {
+        $query->whereDate('visit_date', $searchDate);
+    }
+
+    if ($searchCompany) {
+        $query->where('company', 'LIKE', "%{$searchCompany}%");
+    }
+
+    $allGuestBooks = $query->get();
 
     $users = \App\Models\User::with('division')->get();
-
 
     return Inertia::render('Dashboard', [
         'allGuestBooks' => $allGuestBooks,
         'users' => $users,
-
+        'filters' => [
+            'search_guest_name' => $searchGuestName,
+            'search_date' => $searchDate,
+            'search_company' => $searchCompany,
+        ]
     ]);
 })->middleware(['auth'])->name('dashboard');
 
@@ -37,19 +55,17 @@ Route::middleware('auth')->group(function () {
 
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Grup route khusus untuk fitur Buku Tamu (GuestBook)
     Route::prefix('guestbook')->name('guestbook.')->group(function () {
 
         Route::post('/', [GuestBookController::class, 'store'])->name('store');
 
-
         Route::put('/{id}', [GuestBookController::class, 'update'])->name('update');
-
 
         Route::delete('/{id}', [GuestBookController::class, 'destroy'])->name('destroy');
 
-        // Route khusus untuk memperbarui jam keluar tamu
         Route::put('/{id}/update-checkout', [GuestBookController::class, 'updateCheckOut'])->name('update.checkout');
+
+        Route::get('/export-pdf', [GuestBookController::class, 'exportPdf'])->name('export.pdf');
     });
 });
 
