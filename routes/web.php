@@ -1,4 +1,5 @@
 <?php
+// routes/web.php
 
 use App\Http\Controllers\GuestBookController;
 use App\Http\Controllers\ProfileController;
@@ -16,25 +17,41 @@ Route::get('/dashboard', function () {
         ->orderBy('visit_date', 'desc')
         ->orderBy('check_in_time', 'desc')
         ->get();
+
+
     $users = \App\Models\User::with('division')->get();
 
-    return Inertia::render('Dashboard', ['allGuestBooks' => $allGuestBooks, 'users' => $users]);
+
+    return Inertia::render('Dashboard', [
+        'allGuestBooks' => $allGuestBooks,
+        'users' => $users,
+
+    ]);
 })->middleware(['auth'])->name('dashboard');
 
-
 Route::middleware('auth')->group(function () {
+
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+    // Grup route khusus untuk fitur Buku Tamu (GuestBook)
     Route::prefix('guestbook')->name('guestbook.')->group(function () {
-        Route::get('/', [GuestBookController::class, 'index'])->name('index');
+
         Route::post('/', [GuestBookController::class, 'store'])->name('store');
+
+
         Route::put('/{id}', [GuestBookController::class, 'update'])->name('update');
+
+
         Route::delete('/{id}', [GuestBookController::class, 'destroy'])->name('destroy');
 
+        // Route khusus untuk memperbarui jam keluar tamu
         Route::put('/{id}/update-checkout', [GuestBookController::class, 'updateCheckOut'])->name('update.checkout');
     });
 });
 
+// Memasukkan route autentikasi yang disediakan oleh Laravel Breeze
 require __DIR__ . '/auth.php';

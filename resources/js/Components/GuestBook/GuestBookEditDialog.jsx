@@ -26,19 +26,19 @@ const GuestBookEditDialog = ({
     entry,
     users = [],
     open,
-    onClose,
+    onClose, // Gunakan 'onClose' sesuai dengan prop yang dikirim dari GuestBookTable
     refreshData,
 }) => {
     const { data, setData, put, processing, errors, reset, clearErrors } =
         useForm({
             guest_name: entry?.guest_name || "",
-            visit_date: entry?.visit_date || "", // Format YYYY-MM-DD
+            visit_date: entry?.visit_date || "",
             check_in_time: entry?.check_in_time
                 ? entry.check_in_time.substring(0, 5)
-                : "", // Ambil HH:MM
+                : "",
             check_out_time: entry?.check_out_time
                 ? entry.check_out_time.substring(0, 5)
-                : "", // Ambil HH:MM
+                : "",
             company: entry?.company || "",
             purpose: entry?.purpose || "",
             identity_number: entry?.identity_number || "",
@@ -54,10 +54,10 @@ const GuestBookEditDialog = ({
                 visit_date: entry.visit_date,
                 check_in_time: entry.check_in_time
                     ? entry.check_in_time.substring(0, 5)
-                    : "", // Ambil HH:MM
+                    : "",
                 check_out_time: entry.check_out_time
                     ? entry.check_out_time.substring(0, 5)
-                    : "", // Ambil HH:MM
+                    : "",
                 company: entry.company,
                 purpose: entry.purpose,
                 identity_number: entry.identity_number,
@@ -80,15 +80,26 @@ const GuestBookEditDialog = ({
                 : null,
         };
 
-        put(route("guestbook.update", entry.id), submitData, {
+        // --- PERBAIKAN SIGNATURE useFom.put ---
+        // Gunakan: put(url, { data: ..., onSuccess: ..., ... })
+        put(route("guestbook.update", entry.id), {
+            submitData, // <-- Data dikirim dalam properti 'data' dari objek options
             onSuccess: () => {
+                console.log("Edit successful!");
                 reset();
-                onClose();
+                onClose(); // Gunakan 'onClose' sesuai dengan prop yang diterima
                 if (refreshData) {
+                    console.log("Refreshing data...");
                     refreshData();
                 }
+                toast.success("Data tamu berhasil diperbarui!");
+            },
+            onError: (errors) => {
+                console.error("Validation errors on edit:", errors);
+                toast.error("Gagal memperbarui data. Silakan periksa kembali.");
             },
         });
+        // --- AKHIR PERBAIKAN ---
     };
 
     const handleChange = (e) => setData(e.target.name, e.target.value);
@@ -98,6 +109,8 @@ const GuestBookEditDialog = ({
 
     return (
         <Dialog open={open} onOpenChange={onClose}>
+            {" "}
+            {/* Gunakan 'onClose' untuk menutup dialog */}
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
                     <DialogTitle>Edit Buku Tamu</DialogTitle>
@@ -287,7 +300,7 @@ const GuestBookEditDialog = ({
                             variant="outline"
                             onClick={() => {
                                 reset();
-                                onClose();
+                                onClose(); // Gunakan 'onClose'
                             }}
                         >
                             Batal

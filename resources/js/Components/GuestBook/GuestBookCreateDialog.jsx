@@ -28,7 +28,7 @@ const GuestBookCreateDialog = ({ users = [], open, onOpenChange }) => {
         check_out_time: "",
         company: "",
         purpose: "",
-        user_id: "", // Nilai default tetap string kosong untuk form
+        user_id: "",
     });
 
     const handleSubmit = (e) => {
@@ -37,6 +37,14 @@ const GuestBookCreateDialog = ({ users = [], open, onOpenChange }) => {
             onSuccess: () => {
                 reset();
                 onOpenChange(false);
+                if (refreshData) {
+                    refreshData();
+                }
+                toast.success("Data tamu berhasil disimpan!");
+            },
+            onError: (errors) => {
+                console.error("Validation errors on create:", errors);
+                toast.error("Gagal menyimpan data. Silakan periksa kembali.");
             },
         });
     };
@@ -138,6 +146,7 @@ const GuestBookCreateDialog = ({ users = [], open, onOpenChange }) => {
                             name="user_id"
                             value={data.user_id}
                             onValueChange={handleSelectChange}
+                            required
                         >
                             <SelectTrigger
                                 className={

@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import { Button } from "@/Components/ui/button";
 // Impor komponen dialog edit
 import GuestBookEditDialog from "@/Components/GuestBook/GuestBookEditDialog";
+import GuestBookDeleteDialog from "./GuestBookDeleteDialog";
 
 const GuestBookTable = ({
     guestBooks,
@@ -13,13 +14,11 @@ const GuestBookTable = ({
     refreshData,
     users = [],
 }) => {
-    // Tambahkan users ke props
-    // Ambil csrf_token dari shared props Inertia
     const { csrf_token } = usePage().props;
 
-    // State untuk dialog edit
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
     const [currentEntry, setCurrentEntry] = useState(null);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
     const formatTime = (timeStr) => {
         if (!timeStr) return "-";
@@ -73,10 +72,9 @@ const GuestBookTable = ({
         }
     };
 
-    // Fungsi untuk membuka dialog edit
     const openEditDialog = (entry) => {
-        setCurrentEntry(entry); // Simpan data entry yang akan diedit
-        setIsEditDialogOpen(true); // Buka dialog
+        setCurrentEntry(entry);
+        setIsEditDialogOpen(true);
     };
 
     // Fungsi untuk menutup dialog edit
@@ -85,10 +83,21 @@ const GuestBookTable = ({
         setCurrentEntry(null); // Kosongkan data entry
     };
 
+    const openDeleteDialog = (entry) => {
+        setCurrentEntry(entry); // Simpan data entry yang akan dihapus
+        setIsDeleteDialogOpen(true); // Buka dialog delete
+    };
+
+    // 4. Fungsi untuk menutup dialog delete
+    const closeDeleteDialog = () => {
+        setIsDeleteDialogOpen(false);
+        // setCurrentEntry(null); // Opsional: Kosongkan setelah dialog ditutup
+    };
+
     if (!guestBooks || guestBooks.length === 0) {
         return (
             <p className="text-center text-gray-500">
-                No guest book entries found.
+                <i> ~ Tidak ada buku tamu yang tersedia ~</i>
             </p>
         );
     }
@@ -189,19 +198,18 @@ const GuestBookTable = ({
                             </td>
                             {showActions && (
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                    {/* Tombol Edit: Gunakan onClick untuk membuka dialog */}
                                     <Button
                                         size="sm"
                                         className="bg-blue-500 text-white hover:bg-blue-700 mr-2"
-                                        onClick={() => openEditDialog(entry)} // Panggil fungsi openEditDialog
+                                        onClick={() => openEditDialog(entry)}
                                     >
                                         Edit
                                     </Button>
 
-                                    {/* Tombol Delete */}
                                     <Button
                                         size="sm"
                                         className="bg-red-500 hover:bg-red-700 text-white"
+                                        onClick={() => openDeleteDialog(entry)}
                                     >
                                         Delete
                                     </Button>
@@ -212,14 +220,18 @@ const GuestBookTable = ({
                 </tbody>
             </table>
 
-            {/* Render komponen dialog edit */}
-            {/* Kirimkan data entry, users, state open/close, dan fungsi refresh */}
             <GuestBookEditDialog
-                entry={currentEntry} // Kirim data entry yang dipilih
-                users={users} // Kirim data users untuk dropdown
-                open={isEditDialogOpen} // Kirim state open/close
-                onClose={closeEditDialog} // Kirim fungsi untuk menutup dialog
-                refreshData={refreshData} // Kirim fungsi refresh data
+                entry={currentEntry}
+                users={users}
+                open={isEditDialogOpen}
+                onClose={closeEditDialog}
+                refreshData={refreshData}
+            />
+            <GuestBookDeleteDialog
+                entry={currentEntry}
+                open={isDeleteDialogOpen}
+                onClose={closeDeleteDialog}
+                refreshData={refreshData}
             />
         </div>
     );

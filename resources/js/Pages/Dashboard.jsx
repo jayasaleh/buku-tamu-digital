@@ -14,7 +14,6 @@ export default function Dashboard({ allGuestBooks, users }) {
     const openCreateDialog = () => setIsCreateDialogOpen(true);
     const closeCreateDialog = () => setIsCreateDialogOpen(false);
 
-    // Fungsi untuk me-refresh data
     const refreshData = () => {
         router.reload({ only: ["allGuestBooks", "users"] });
     };
@@ -37,11 +36,10 @@ export default function Dashboard({ allGuestBooks, users }) {
                     <div className="bg-white shadow-sm sm:rounded-lg dark:bg-gray-800">
                         <div className="p-6">
                             <div className="overflow-x-auto">
-                                {/* Kirim fungsi refreshData ke GuestBookTable */}
                                 <GuestBookTable
                                     guestBooks={allGuestBooks}
                                     showActions={true}
-                                    refreshData={refreshData} // <-- Tambahkan ini
+                                    refreshData={refreshData}
                                     users={users}
                                 />
                             </div>
@@ -53,8 +51,8 @@ export default function Dashboard({ allGuestBooks, users }) {
             <GuestBookCreateDialog
                 users={users}
                 open={isCreateDialogOpen}
-                closeDialog={closeCreateDialog}
-                refreshData={refreshData} // <-- Jangan lupa kirim juga ke dialog
+                onOpenChange={closeCreateDialog}
+                refreshData={refreshData}
             />
         </AuthenticatedLayout>
     );
